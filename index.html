@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Chat</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h2>Live Chat</h2>
+    </div>
+    <div class="chat-messages" id="messages"></div>
+    <div id="typing" class="typing"></div>
+    <form id="form" class="chat-form" action="">
+      <input id="input" class="chat-input" autocomplete="off" placeholder="Digite sua mensagem..." />
+      <button class="chat-button">Enviar</button>
+    </form>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+
+    // Envia mensagem ao servidor quando o formulário é enviado
+    document.getElementById('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var input = document.getElementById('input');
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
+
+    // Envia notificação de que o usuário está digitando
+    document.getElementById('input').addEventListener('input', function() {
+      socket.emit('typing', 'Um usuário está digitando...');
+    });
+
+    // Escuta por mensagens do servidor e as exibe
+    socket.on('chat message', function(msg) {
+      var item = document.createElement('div');
+      item.className = 'chat-message';
+      item.textContent = msg;
+      document.getElementById('messages').appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    // Escuta por notificações de usuário conectado
+    socket.on('user connected', function(msg) {
+      var item = document.createElement('div');
+      item.className = 'chat-notification';
+      item.textContent = msg;
+      document.getElementById('messages').appendChild(item);
+    });
+
+    // Escuta por notificações de usuário desconectado
+    socket.on('user disconnected', function(msg) {
+      var item = document.createElement('div');
+      item.className = 'chat-notification';
+      item.textContent = msg;
+      document.getElementById('messages').appendChild(item);
+    });
+
+    // Escuta por notificações de que um usuário está digitando
+    socket.on('typing', function(msg) {
+      var typing = document.getElementById('typing');
+      typing.textContent = msg;
+      setTimeout(function() {
+        typing.textContent = '';
+      }, 3000);
+    });
+  </script>
+</body>
+</html>
